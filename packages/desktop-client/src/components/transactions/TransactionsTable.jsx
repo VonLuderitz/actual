@@ -26,8 +26,9 @@ import {
   isValid as isDateValid,
 } from 'date-fns';
 
-import { addNotification, pushModal } from 'loot-core/client/actions';
+import { addNotification } from 'loot-core/client/actions';
 import { useCachedSchedules } from 'loot-core/client/data-hooks/schedules';
+import { pushModal } from 'loot-core/client/modals/modalsSlice';
 import {
   getAccountsById,
   getPayeesById,
@@ -595,9 +596,12 @@ function PayeeCell({
         disabled={isPreview}
         onSelect={() =>
           dispatch(
-            pushModal('payee-autocomplete', {
-              onSelect: payeeId => {
-                onUpdate('payee', payeeId);
+            pushModal({
+              name: 'payee-autocomplete',
+              options: {
+                onSelect: payeeId => {
+                  onUpdate('payee', payeeId);
+                },
               },
             }),
           )
@@ -933,15 +937,18 @@ const Transaction = memo(function Transaction({
         if (showReconciliationWarning === false) {
           setShowReconciliationWarning(true);
           dispatch(
-            pushModal('confirm-transaction-edit', {
-              onCancel: () => {
-                setShowReconciliationWarning(false);
+            pushModal({
+              name: 'confirm-transaction-edit',
+              options: {
+                onCancel: () => {
+                  setShowReconciliationWarning(false);
+                },
+                onConfirm: () => {
+                  setShowReconciliationWarning(false);
+                  onUpdateAfterConfirm(name, value);
+                },
+                confirmReason: 'editReconciled',
               },
-              onConfirm: () => {
-                setShowReconciliationWarning(false);
-                onUpdateAfterConfirm(name, value);
-              },
-              confirmReason: 'editReconciled',
             }),
           );
         }
@@ -953,11 +960,14 @@ const Transaction = memo(function Transaction({
     // Allow un-reconciling (unlocking) transactions
     if (name === 'cleared' && transaction.reconciled) {
       dispatch(
-        pushModal('confirm-transaction-edit', {
-          onConfirm: () => {
-            onUpdateAfterConfirm('reconciled', false);
+        pushModal({
+          name: 'confirm-transaction-edit',
+          options: {
+            onConfirm: () => {
+              onUpdateAfterConfirm('reconciled', false);
+            },
+            confirmReason: 'unlockReconciled',
           },
-          confirmReason: 'unlockReconciled',
         }),
       );
     }
