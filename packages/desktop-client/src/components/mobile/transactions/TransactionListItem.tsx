@@ -187,9 +187,12 @@ export function TransactionListItem({
                     style={{
                       ...textStyle,
                       fontWeight: isAdded ? '600' : '400',
-                      ...(!displayPayee && {
-                        fontStyle: 'italic',
-                      }),
+                      ...(!displayPayee && !isPreview
+                        ? {
+                            color: theme.pageTextLight,
+                            fontStyle: 'italic',
+                          }
+                        : {}),
                     }}
                   >
                     {displayPayee || '(No payee)'}
