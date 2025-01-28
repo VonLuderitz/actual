@@ -2,29 +2,30 @@
 import * as db from '../db';
 
 async function getPayee(acct) {
-  return db.first('SELECT * FROM payees WHERE transfer_acct = ?', [acct]);
+  return db.first<db.DbPayee>('SELECT * FROM payees WHERE transfer_acct = ?', [
+    acct,
+  ]);
 }
 
 async function getTransferredAccount(transaction) {
   if (transaction.payee) {
-    const { transfer_acct } = await db.first(
-      'SELECT id, transfer_acct FROM v_payees WHERE id = ?',
-      [transaction.payee],
-    );
+    const { transfer_acct } = await db.first<
+      Pick<db.DbViewPayee, 'id' | 'transfer_acct'>
+    >('SELECT id, transfer_acct FROM v_payees WHERE id = ?', [
+      transaction.payee,
+    ]);
     return transfer_acct;
   }
   return null;
 }
 
 async function clearCategory(transaction, transferAcct) {
-  const { offbudget: fromOffBudget } = await db.first(
-    'SELECT offbudget FROM accounts WHERE id = ?',
-    [transaction.account],
-  );
-  const { offbudget: toOffBudget } = await db.first(
-    'SELECT offbudget FROM accounts WHERE id = ?',
-    [transferAcct],
-  );
+  const { offbudget: fromOffBudget } = await db.first<
+    Pick<db.DbAccount, 'offbudget'>
+  >('SELECT offbudget FROM accounts WHERE id = ?', [transaction.account]);
+  const { offbudget: toOffBudget } = await db.first<
+    Pick<db.DbAccount, 'offbudget'>
+  >('SELECT offbudget FROM accounts WHERE id = ?', [transferAcct]);
 
   // If the transfer is between two on budget or two off budget accounts,
   // we should clear the category, because the category is not relevant
@@ -50,7 +51,7 @@ export async function addTransfer(transaction, transferredAccount) {
     return null;
   }
 
-  const { id: fromPayee } = await db.first(
+  const { id: fromPayee } = await db.first<Pick<db.DbPayee, 'id'>>(
     'SELECT id FROM payees WHERE transfer_acct = ?',
     [transaction.account],
   );
