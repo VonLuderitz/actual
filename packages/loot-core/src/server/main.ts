@@ -45,6 +45,12 @@ import { APIError, TransactionError, PostError } from './errors';
 import { app as filtersApp } from './filters/app';
 import { handleBudgetImport } from './importers';
 import { app } from './main-app';
+import {
+  accountModel,
+  categoryGroupModel,
+  categoryModel,
+  payeeModel,
+} from './models';
 import { mutator, runHandler } from './mutators';
 import { app as notesApp } from './notes/app';
 import * as Platform from './platform';
@@ -108,8 +114,8 @@ handlers['redo'] = mutator(function () {
 
 handlers['get-categories'] = async function () {
   return {
-    grouped: await db.getCategoriesGrouped(),
-    list: await db.getCategories(),
+    grouped: categoryGroupModel.fromDbArray(await db.getCategoriesGrouped()),
+    list: categoryModel.fromDbArray(await db.getCategories()),
   };
 };
 
@@ -118,7 +124,8 @@ handlers['get-budget-bounds'] = async function () {
 };
 
 handlers['envelope-budget-month'] = async function ({ month }) {
-  const groups = await db.getCategoriesGrouped();
+  const grouped = await db.getCategoriesGrouped();
+  const groups = categoryGroupModel.fromDbArray(grouped);
   const sheetName = monthUtils.sheetForMonth(month);
 
   function value(name) {
@@ -170,7 +177,8 @@ handlers['envelope-budget-month'] = async function ({ month }) {
 };
 
 handlers['tracking-budget-month'] = async function ({ month }) {
-  const groups = await db.getCategoriesGrouped();
+  const grouped = await db.getCategoriesGrouped();
+  const groups = categoryGroupModel.fromDbArray(grouped);
   const sheetName = monthUtils.sheetForMonth(month);
 
   function value(name) {
@@ -303,7 +311,8 @@ handlers['category-delete'] = mutator(async function ({ id, transferId }) {
 });
 
 handlers['get-category-groups'] = async function () {
-  return await db.getCategoriesGrouped();
+  const grouped = await db.getCategoriesGrouped();
+  return categoryGroupModel.fromDbArray(grouped);
 };
 
 handlers['category-group-create'] = mutator(async function ({
@@ -340,7 +349,7 @@ handlers['category-group-delete'] = mutator(async function ({
   transferId,
 }) {
   return withUndo(async () => {
-    const groupCategories = await db.all(
+    const groupCategories = await db.all<Pick<db.DbCategory, 'id'>>(
       'SELECT id FROM categories WHERE cat_group = ? AND tombstone = 0',
       [id],
     );
@@ -393,11 +402,11 @@ handlers['common-payees-get'] = async function () {
 };
 
 handlers['payees-get'] = async function () {
-  return db.getPayees();
+  return payeeModel.fromDbArray(await db.getPayees());
 };
 
 handlers['payees-get-orphaned'] = async function () {
-  return db.syncGetOrphanedPayees();
+  return await db.syncGetOrphanedPayees();
 };
 
 handlers['payees-get-rule-counts'] = async function () {
@@ -514,7 +523,7 @@ handlers['account-update'] = mutator(async function ({ id, name }) {
 });
 
 handlers['accounts-get'] = async function () {
-  return db.getAccounts();
+  return accountModel.fromDbArray(await db.getAccounts());
 };
 
 handlers['account-balance'] = async function ({ id, cutoff }) {
