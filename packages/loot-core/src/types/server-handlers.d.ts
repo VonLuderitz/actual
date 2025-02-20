@@ -17,7 +17,6 @@ import {
   PayeeEntity,
 } from './models';
 import { OpenIdConfig } from './models/openid';
-import { GlobalPrefs, MetadataPrefs } from './prefs';
 // eslint-disable-next-line import/no-unresolved
 import { Query } from './query';
 import { EmptyObject } from './util';
@@ -232,14 +231,6 @@ export interface ServerHandlers {
   }>;
 
   'account-unlink': (arg: { id }) => Promise<'ok'>;
-
-  'save-global-prefs': (prefs) => Promise<'ok'>;
-
-  'load-global-prefs': () => Promise<GlobalPrefs>;
-
-  'save-prefs': (prefsToSet) => Promise<'ok'>;
-
-  'load-prefs': () => Promise<MetadataPrefs | null>;
 
   'sync-reset': () => Promise<{ error?: { reason: string; meta?: unknown } }>;
 
