@@ -5,7 +5,6 @@ import { RemoteFile } from '../server/cloud-storage';
 import { Node as SpreadsheetNode } from '../server/spreadsheet/spreadsheet';
 import { Message } from '../server/sync';
 
-import { Budget } from './budget';
 import {
   AccountEntity,
   CategoryEntity,
